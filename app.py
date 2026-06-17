@@ -25,6 +25,50 @@ def index():
 def about():
     return render_template('about.html')
 
+@app.route('/posts')
+def posts():
+    articles = Article.query.order_by(Article.date.desc()).all()
+    return render_template('posts.html', articles=articles)
+
+
+@app.route('/posts/<int:id>/delete')
+def delete(id):
+    article = Article.query.filter_by(id=id).first()
+
+
+    try:
+        db.session.delete(article)
+        db.session.commit()
+        return redirect('/posts')
+    except:
+        return "При удалении статьи возникла ошибка"
+
+
+@app.route('/posts/<int:id>/ubdate', methods=['GET', 'POST'])
+def post_ubdate(id):
+    article = Article.query.get(id)
+    if request.method == 'POST':
+        article.title = request.form['title']
+        article.intro = request.form['intro']
+        article.text = request.form['text']
+
+        try:
+            db.session.commit()
+            return redirect('/posts')
+        except:
+            return "При редактировании статьи произошла ошибка"
+    else:
+        article = Article.query.get(id)
+        return render_template('post_ubdate.html', article=article)
+
+
+@app.route('/posts/<int:id>')
+def post_detail(id):
+    article = Article.query.get(id)
+    return render_template('post_detale.html', article=article)
+
+
+
 @app.route('/create-article', methods=['POST', 'GET'])
 def create_article():
     if request.method == 'POST':
@@ -37,7 +81,7 @@ def create_article():
         try:
             db.session.add(article)
             db.session.commit()
-            return redirect('/')
+            return redirect('/posts')
         except:
             return "При добавлении статьи произошла ошибка"
     else:
